@@ -1,0 +1,19 @@
+{
+  "name": "webpack-task-1",
+  "version": "1.0.0",
+  "description": "Webpack task 1: jQuery + Lodash debounce",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jquery": "^3.6.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  }
+}
