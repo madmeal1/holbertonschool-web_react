@@ -1,0 +1,51 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #2d2d2d;
+}
+
+.App-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px 18px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.App-logo {
+  width: 220px;
+  height: auto;
+  object-fit: contain;
+}
+
+.App-header h1 {
+  margin: 0 0 0 18px;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #e1003c;
+}
+
+.App-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 28px 32px;
+}
+
+.App-body p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2d2d2d;
+}
+
+.App-footer {
+  border-top: 1px solid #e0e0e0;
+  padding: 18px 32px 20px;
+}
+
+.App-footer p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #2d2d2d;
+}
