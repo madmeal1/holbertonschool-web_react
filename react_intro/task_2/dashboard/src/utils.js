@@ -18,4 +18,12 @@ function getFooterCopy(isIndex) {
   return 'Holberton School main dashboard'
 }
 
-export { getCurrentYear, getFooterCopy }
+/**
+ * Get the latest notification message
+ * @returns {string} An HTML string describing the latest notification
+ */
+function getLatestNotification() {
+  return '<strong>Urgent requirement</strong> - complete by EOD'
+}
+
+export { getCurrentYear, getFooterCopy, getLatestNotification }

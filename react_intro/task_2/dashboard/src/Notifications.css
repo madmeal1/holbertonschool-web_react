@@ -9,3 +9,21 @@
   font-size: 1rem;
   color: #2d2d2d;
 }
+
+.notification-items ul {
+  margin: 12px 0 0;
+  padding-left: 24px;
+}
+
+.notification-items li {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.notification-items li[data-priority='default'] {
+  color: blue;
+}
+
+.notification-items li[data-priority='urgent'] {
+  color: red;
+}
