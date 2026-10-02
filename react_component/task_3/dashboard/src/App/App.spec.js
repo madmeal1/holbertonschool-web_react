@@ -15,6 +15,13 @@ describe('App', () => {
     expect(screen.getByText(/copyright \d{4} - holberton school/i)).toBeTruthy();
   });
 
+  it('renders the News from the School section by default', () => {
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: /news from the school/i })).toBeTruthy();
+    expect(screen.getByText(/holberton school news goes here/i)).toBeTruthy();
+  });
+
   describe('when isLoggedIn is false', () => {
     it('renders the Login form and no CourseList', () => {
       const { container } = render(<App isLoggedIn={false} />);
