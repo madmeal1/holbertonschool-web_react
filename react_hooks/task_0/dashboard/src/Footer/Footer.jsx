@@ -9,7 +9,7 @@ function Footer() {
   return (
     <div className="App-footer">
       <p>Copyright {getCurrentYear()} - {getFooterCopy(true)}</p>
-      {user && user.isLoggedIn && (
+      {user?.isLoggedIn && (
         <p>
           <a href="#">Contact us</a>
         </p>

@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { useState } from 'react';
+import { render, screen, act } from '@testing-library/react';
 import Footer from './Footer';
 import newContext from '../Context/context';
 
@@ -38,5 +39,32 @@ describe('Footer', () => {
 
     expect(link.tagName).toBe('A');
     expect(link.closest('p')).toBeTruthy();
+  });
+
+  it('is a functional component', () => {
+    expect(typeof Footer).toBe('function');
+    expect(Footer.prototype?.render).toBeUndefined();
+  });
+
+  it('shows or hides the "Contact us" link when the context user changes', () => {
+    let setUser;
+    function Wrapper() {
+      const [user, updateUser] = useState({ email: '', password: '', isLoggedIn: false });
+      setUser = updateUser;
+
+      return (
+        <newContext.Provider value={{ user, logOut: () => {} }}>
+          <Footer />
+        </newContext.Provider>
+      );
+    }
+    render(<Wrapper />);
+    expect(screen.queryByText(/contact us/i)).toBeNull();
+
+    act(() => setUser({ email: 'test@example.com', password: 'secret123', isLoggedIn: true }));
+    expect(screen.getByText(/contact us/i)).toBeTruthy();
+
+    act(() => setUser({ email: '', password: '', isLoggedIn: false }));
+    expect(screen.queryByText(/contact us/i)).toBeNull();
   });
 });
