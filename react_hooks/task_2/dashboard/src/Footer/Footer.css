@@ -1,0 +1,10 @@
+.App-footer {
+  border-top: 1px solid #e0e0e0;
+  padding: 18px 32px 20px;
+}
+
+.App-footer p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #2d2d2d;
+}

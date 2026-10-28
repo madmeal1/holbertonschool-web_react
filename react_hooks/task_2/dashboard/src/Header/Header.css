@@ -1,0 +1,19 @@
+.App-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px 18px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.App-logo {
+  width: 220px;
+  height: auto;
+  object-fit: contain;
+}
+
+.App-header h1 {
+  margin: 0 0 0 18px;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #e1003c;
+}
