@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+/* global process */
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import './App.css'
 import Notifications from '../Notifications/Notifications'
 import Header from '../Header/Header'
@@ -10,22 +12,67 @@ import BodySectionWithMarginBottom from '../BodySection/BodySectionWithMarginBot
 import { getLatestNotification } from '../utils/utils.js'
 import newContext, { user as defaultUser } from '../Context/context'
 
-const notificationsList = [
-  { id: 1, type: 'default', value: 'New course available' },
-  { id: 2, type: 'urgent', value: 'New resume available' },
-  { id: 3, type: 'urgent', html: { __html: getLatestNotification() } },
-]
-
-const coursesList = [
-  { id: 1, name: 'ES6', credit: 60 },
-  { id: 2, name: 'Webpack', credit: 20 },
-  { id: 3, name: 'React', credit: 40 },
-]
+const logError = (error) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(error)
+  }
+}
 
 function App() {
   const [displayDrawer, setDisplayDrawer] = useState(true)
   const [user, setUser] = useState({ ...defaultUser })
-  const [notifications, setNotifications] = useState(notificationsList)
+  const [notifications, setNotifications] = useState([])
+  const [courses, setCourses] = useState([])
+
+  // Notifications are needed as soon as the app loads
+  useEffect(() => {
+    let ignore = false
+
+    const fetchNotifications = async () => {
+      try {
+        const { data } = await axios.get('/notifications.json')
+        if (!ignore) {
+          setNotifications(
+            data.map((notification) =>
+              notification.id === 3
+                ? { ...notification, html: { __html: getLatestNotification() } }
+                : notification
+            )
+          )
+        }
+      } catch (error) {
+        logError(error)
+      }
+    }
+
+    fetchNotifications()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  // Courses depend on the authenticated user
+  useEffect(() => {
+    let ignore = false
+
+    const fetchCourses = async () => {
+      try {
+        const { data } = await axios.get('/courses.json')
+        if (!ignore) {
+          setCourses(data)
+        }
+      } catch (error) {
+        logError(error)
+      }
+    }
+
+    fetchCourses()
+
+    return () => {
+      ignore = true
+    }
+  }, [user])
 
   const logIn = useCallback((email, password) => {
     setUser({ email, password, isLoggedIn: true })
@@ -63,7 +110,7 @@ function App() {
       <Header />
       {user.isLoggedIn ? (
         <BodySectionWithMarginBottom title="Course list">
-          <CourseList courses={coursesList} />
+          <CourseList courses={courses} />
         </BodySectionWithMarginBottom>
       ) : (
         <BodySectionWithMarginBottom title="Log in to continue">
