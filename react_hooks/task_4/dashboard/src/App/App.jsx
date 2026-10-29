@@ -37,10 +37,8 @@ function App() {
 
   const markNotificationAsRead = useCallback((id) => {
     console.log(`Notification ${id} has been marked as read`)
-    setNotifications((prevNotifications) =>
-      prevNotifications.filter((notification) => notification.id !== id)
-    )
-  }, [])
+    setNotifications(notifications.filter((notification) => notification.id !== id))
+  }, [notifications])
 
   const handleDisplayDrawer = useCallback(() => {
     setDisplayDrawer(true)
