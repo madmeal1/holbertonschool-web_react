@@ -16,6 +16,9 @@ const coursesData = [
   { id: 3, name: 'React', credit: 40 },
 ];
 
+const NOTIFICATIONS_URL = 'http://localhost:5173/notifications.json';
+const COURSES_URL = 'http://localhost:5173/courses.json';
+
 const respondTo = async (url, data) => {
   await act(async () => {
     mockAxios.mockResponseFor({ url }, { data });
@@ -25,8 +28,7 @@ const respondTo = async (url, data) => {
 // Renders the App and resolves the requests fired on mount
 const renderApp = async () => {
   const utils = render(<App />);
-  await respondTo('/notifications.json', notificationsData);
-  await respondTo('/courses.json', coursesData);
+  await respondTo(NOTIFICATIONS_URL, notificationsData);
   return utils;
 };
 
@@ -36,7 +38,7 @@ const logInThroughForm = async (email = 'test@example.com', password = 'secret12
   await user.type(screen.getByLabelText(/email/i), email);
   await user.type(screen.getByLabelText(/password/i), password);
   await user.click(screen.getByRole('button', { name: /ok/i }));
-  await respondTo('/courses.json', coursesData);
+  await respondTo(COURSES_URL, coursesData);
 };
 
 const countRequests = (url) => mockAxios.get.mock.calls.filter(([calledUrl]) => calledUrl === url).length;
@@ -74,8 +76,8 @@ describe('App', () => {
     it('fetches notifications.json once when the App initially renders', () => {
       render(<App />);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/notifications.json');
-      expect(countRequests('/notifications.json')).toBe(1);
+      expect(mockAxios.get).toHaveBeenCalledWith(NOTIFICATIONS_URL);
+      expect(countRequests(NOTIFICATIONS_URL)).toBe(1);
     });
 
     it('displays no notification before the response is received', () => {
@@ -105,9 +107,8 @@ describe('App', () => {
 
       await logInThroughForm();
       fireEvent.click(screen.getByText('logout'));
-      await respondTo('/courses.json', coursesData);
 
-      expect(countRequests('/notifications.json')).toBe(1);
+      expect(countRequests(NOTIFICATIONS_URL)).toBe(1);
     });
 
     it('keeps rendering the App when the request fails', async () => {
@@ -115,7 +116,7 @@ describe('App', () => {
       render(<App />);
 
       await act(async () => {
-        mockAxios.mockError(new Error('Network Error'), mockAxios.getReqByUrl('/notifications.json'));
+        mockAxios.mockError(new Error('Network Error'), mockAxios.getReqByUrl(NOTIFICATIONS_URL));
       });
 
       expect(screen.getByText(/no new notification for now/i)).toBeTruthy();
@@ -127,19 +128,20 @@ describe('App', () => {
   });
 
   describe('fetching courses', () => {
-    it('fetches courses.json when the App initially renders', () => {
+    it('only fetches notifications.json when the App initially renders (user logged out)', () => {
       render(<App />);
 
-      expect(mockAxios.get).toHaveBeenCalledWith('/courses.json');
-      expect(countRequests('/courses.json')).toBe(1);
+      expect(mockAxios.get).toHaveBeenCalledTimes(1);
+      expect(countRequests(COURSES_URL)).toBe(0);
     });
 
-    it('fetches courses.json again and displays the courses when the user logs in', async () => {
+    it('fetches courses.json and displays the courses when the user logs in', async () => {
       const { container } = await renderApp();
 
       await logInThroughForm();
 
-      expect(countRequests('/courses.json')).toBe(2);
+      expect(mockAxios.get).toHaveBeenCalledWith(COURSES_URL);
+      expect(countRequests(COURSES_URL)).toBe(1);
       expect(container.querySelector('table#CourseList')).toBeTruthy();
       const rows = container.querySelectorAll('#CourseList tbody tr');
       expect(rows).toHaveLength(3);
@@ -147,14 +149,23 @@ describe('App', () => {
       expect(rows[2].textContent).toMatch(/React/);
     });
 
-    it('fetches courses.json again when the user logs out', async () => {
+    it('fetches courses.json again each time the user logs in', async () => {
+      await renderApp();
+      await logInThroughForm();
+      fireEvent.click(screen.getByText('logout'));
+
+      await logInThroughForm('other@example.com', 'password456');
+
+      expect(countRequests(COURSES_URL)).toBe(2);
+    });
+
+    it('does not fetch courses.json when the user logs out', async () => {
       await renderApp();
       await logInThroughForm();
 
       fireEvent.click(screen.getByText('logout'));
-      await respondTo('/courses.json', coursesData);
 
-      expect(countRequests('/courses.json')).toBe(3);
+      expect(countRequests(COURSES_URL)).toBe(1);
     });
 
     it('does not fetch courses again when an unrelated state changes', async () => {
@@ -163,7 +174,7 @@ describe('App', () => {
       fireEvent.click(screen.getByRole('button', { name: /close/i }));
       fireEvent.click(screen.getByText(/your notifications/i));
 
-      expect(countRequests('/courses.json')).toBe(1);
+      expect(countRequests(COURSES_URL)).toBe(0);
     });
   });
 
@@ -203,7 +214,6 @@ describe('App', () => {
       await logInThroughForm();
 
       fireEvent.click(screen.getByText('logout'));
-      await respondTo('/courses.json', coursesData);
 
       // isLoggedIn: false
       expect(container.querySelector('#logoutSection')).toBeNull();
@@ -219,7 +229,6 @@ describe('App', () => {
       const { container } = await renderApp();
       await logInThroughForm();
       fireEvent.click(screen.getByText('logout'));
-      await respondTo('/courses.json', coursesData);
 
       await logInThroughForm('other@example.com', 'password456');
 

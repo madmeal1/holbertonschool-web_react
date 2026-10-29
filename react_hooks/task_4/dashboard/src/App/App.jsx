@@ -30,7 +30,7 @@ function App() {
 
     const fetchNotifications = async () => {
       try {
-        const { data } = await axios.get('/notifications.json')
+        const { data } = await axios.get('http://localhost:5173/notifications.json')
         if (!ignore) {
           setNotifications(
             data.map((notification) =>
@@ -52,13 +52,18 @@ function App() {
     }
   }, [])
 
-  // Courses depend on the authenticated user
+  // Courses depend on the authenticated user: only fetch them once logged in
   useEffect(() => {
+    if (!user.isLoggedIn) {
+      setCourses([])
+      return undefined
+    }
+
     let ignore = false
 
     const fetchCourses = async () => {
       try {
-        const { data } = await axios.get('/courses.json')
+        const { data } = await axios.get('http://localhost:5173/courses.json')
         if (!ignore) {
           setCourses(data)
         }
