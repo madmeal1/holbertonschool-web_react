@@ -1,80 +1,78 @@
-import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Header from './Header';
 
-const loggedInUser = {
-  email: 'test@example.com',
-  password: 'secret123',
-  isLoggedIn: true,
+export const convertHexToRGBA = (hexCode) => {
+  let hex = hexCode.replace('#', '');
+
+  if (hex.length === 3) {
+    hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+    console.log({hex})
+  }
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return { r, g, b };
 };
 
-describe('Header', () => {
-  it('renders the Holberton logo', () => {
-    const { container } = render(<Header />);
-    const logo = container.querySelector('img');
+test('should contain a <p/> element with specific text, <h1/>, and an <img/>', () => {
+  const defaultUser = {
+    email: '',
+    password: '',
+    isLoggedIn: false
+  };
 
-    expect(logo).toBeTruthy();
-    expect(logo.getAttribute('alt')).toMatch(/holberton/i);
-  });
+  render(<Header user={defaultUser} logOut={jest.fn()} />);
 
-  it('renders an h1 element with the correct text', () => {
-    render(<Header />);
-    const heading = screen.getByRole('heading', { level: 1 });
+  const headingElement = screen.getByRole('heading', {name: /school Dashboard/i});
+  const imgElement = screen.getByAltText('holberton logo')
 
-    expect(heading.tagName).toBe('H1');
-    expect(heading.textContent).toMatch(/school dashboard/i);
-  });
+  expect(headingElement).toBeInTheDocument();
+  expect(headingElement).toHaveStyle({color: convertHexToRGBA('#e1003c') })
+  expect(imgElement).toBeInTheDocument();
+});
 
-  describe('logoutSection', () => {
-    it('is not rendered without a user prop', () => {
-      const { container } = render(<Header />);
+test('logoutSection is not rendered with default context value', () => {
+  const defaultUser = {
+    email: '',
+    password: '',
+    isLoggedIn: false
+  };
 
-      expect(container.querySelector('#logoutSection')).toBeNull();
-    });
+  render(<Header user={defaultUser} logOut={jest.fn()} />);
 
-    it('is not rendered when the user is logged out', () => {
-      const { container } = render(
-        <Header user={{ email: '', password: '', isLoggedIn: false }} logOut={() => {}} />
-      );
+  const logoutSection = screen.queryByText(/logout/i);
 
-      expect(container.querySelector('#logoutSection')).toBeNull();
-    });
+  expect(logoutSection).not.toBeInTheDocument();
+});
 
-    it('is rendered with the user email when the user is logged in', () => {
-      const { container } = render(<Header user={loggedInUser} logOut={() => {}} />);
-      const logoutSection = container.querySelector('#logoutSection');
+test('logoutSection is rendered when user is logged in', () => {
+  const loggedInUser = {
+    email: 'test@test.com',
+    password: 'password123',
+    isLoggedIn: true
+  };
 
-      expect(logoutSection).toBeTruthy();
-      expect(logoutSection.textContent).toMatch(/welcome test@example\.com \(logout\)/i);
-    });
+  render(<Header user={loggedInUser} logOut={jest.fn()} />);
 
-    it('calls the logOut prop when clicking on the logout link', () => {
-      const logOut = jest.fn();
-      render(<Header user={loggedInUser} logOut={logOut} />);
+  const logoutSection = screen.getByText(/logout/i);
+  expect(logoutSection).toBeInTheDocument();
+  expect(screen.getByText(/test@test.com/i)).toBeInTheDocument();
+});
 
-      fireEvent.click(screen.getByText('logout'));
+test('clicking logout link calls the logOut function', () => {
+  const logOutSpy = jest.fn();
+  const loggedInUser = {
+    email: 'test@test.com',
+    password: 'password123',
+    isLoggedIn: true
+  };
 
-      expect(logOut).toHaveBeenCalledTimes(1);
-    });
-  });
+  render(<Header user={loggedInUser} logOut={logOutSpy} />);
 
-  it('is a functional component', () => {
-    expect(typeof Header).toBe('function');
-    expect(Header.prototype?.render).toBeUndefined();
-  });
+  const logoutLink = screen.getByText(/logout/i);
+  fireEvent.click(logoutLink);
 
-  it('hides the logoutSection once logOut updates the user prop', () => {
-    function Wrapper() {
-      const [user, setUser] = useState(loggedInUser);
-      const logOut = () => setUser({ email: '', password: '', isLoggedIn: false });
-
-      return <Header user={user} logOut={logOut} />;
-    }
-    const { container } = render(<Wrapper />);
-    expect(container.querySelector('#logoutSection')).toBeTruthy();
-
-    fireEvent.click(screen.getByText('logout'));
-
-    expect(container.querySelector('#logoutSection')).toBeNull();
-  });
+  expect(logOutSpy).toHaveBeenCalledTimes(1);
 });

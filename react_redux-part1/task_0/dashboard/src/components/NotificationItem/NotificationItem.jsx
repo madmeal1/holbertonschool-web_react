@@ -1,40 +1,59 @@
-import { memo } from 'react'
-import PropTypes from 'prop-types'
+import { memo } from "react";
+import { StyleSheet, css } from "aphrodite";
 
-function NotificationItem({ id, type = 'default', html, value, markAsRead = () => {} }) {
-  const handleClick = () => {
-    markAsRead(id)
-  }
+const styles = StyleSheet.create({
+  default: {
+    color: "blue",
+    "@media (max-width: 900px)": {
+      width: "100%",
+      borderBottom: "1px solid black",
+      fontSize: "20px",
+      padding: "10px 8px",
+      listStyle: "none",
+    },
+  },
+  urgent: {
+    color: "red",
+    "@media (max-width: 900px)": {
+      width: "100%",
+      borderBottom: "1px solid black",
+      fontSize: "20px",
+      padding: "10px 8px",
+      listStyle: "none",
+    },
+  },
+});
 
-  const colorClass =
-    type === 'urgent'
-      ? 'text-[var(--urgent-notification-item)]'
-      : 'text-[var(--default-notification-item)]'
-
-  if (html) {
+const NotificationItem = memo(function NotificationItem({
+  type,
+  html,
+  value,
+  markAsRead,
+  id,
+}) {
+  const itemStyle = type === "default" ? styles.default : styles.urgent;
+  // this console.log is only for test purposes and not mentionned/required in the student code
+  // console.log(`Rendering NotificationItem with id: ${id}, type: ${type}, value: ${value}`);
+  if (html !== undefined) {
     return (
       <li
-        className={colorClass}
+        className={css(itemStyle)}
         data-notification-type={type}
-        onClick={handleClick}
         dangerouslySetInnerHTML={html}
-      />
-    )
+        onClick={() => markAsRead(id)}
+      ></li>
+    );
+  } else {
+    return (
+      <li
+        className={css(itemStyle)}
+        data-notification-type={type}
+        onClick={() => markAsRead(id)}
+      >
+        {value}
+      </li>
+    );
   }
+});
 
-  return (
-    <li className={colorClass} data-notification-type={type} onClick={handleClick}>
-      {value}
-    </li>
-  )
-}
-
-NotificationItem.propTypes = {
-  id: PropTypes.number,
-  type: PropTypes.string,
-  html: PropTypes.shape({ __html: PropTypes.string }),
-  value: PropTypes.string,
-  markAsRead: PropTypes.func,
-}
-
-export default memo(NotificationItem)
+export default NotificationItem;
