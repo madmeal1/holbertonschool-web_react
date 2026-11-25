@@ -1,80 +1,71 @@
-import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import Header from './Header';
+import authReducer, { login } from '../../features/auth/authSlice';
 
-const loggedInUser = {
-  email: 'test@example.com',
-  password: 'secret123',
-  isLoggedIn: true,
+export const convertHexToRGBA = (hexCode) => {
+  let hex = hexCode.replace('#', '');
+
+  if (hex.length === 3) {
+    hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+  }
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return { r, g, b };
 };
 
-describe('Header', () => {
-  it('renders the Holberton logo', () => {
-    const { container } = render(<Header />);
-    const logo = container.querySelector('img');
+const renderWithStore = (store) =>
+  render(
+    <Provider store={store}>
+      <Header />
+    </Provider>
+  );
 
-    expect(logo).toBeTruthy();
-    expect(logo.getAttribute('alt')).toMatch(/holberton/i);
-  });
+const createLoggedInStore = () => {
+  const store = configureStore({ reducer: { auth: authReducer } });
+  store.dispatch(login({ email: 'test@test.com', password: 'password123' }));
+  return store;
+};
 
-  it('renders an h1 element with the correct text', () => {
-    render(<Header />);
-    const heading = screen.getByRole('heading', { level: 1 });
+test('should contain a <p/> element with specific text, <h1/>, and an <img/>', () => {
+  renderWithStore(configureStore({ reducer: { auth: authReducer } }));
 
-    expect(heading.tagName).toBe('H1');
-    expect(heading.textContent).toMatch(/school dashboard/i);
-  });
+  const headingElement = screen.getByRole('heading', {name: /school Dashboard/i});
+  const imgElement = screen.getByAltText('holberton logo')
 
-  describe('logoutSection', () => {
-    it('is not rendered without a user prop', () => {
-      const { container } = render(<Header />);
+  expect(headingElement).toBeInTheDocument();
+  expect(headingElement).toHaveStyle({color: convertHexToRGBA('#e1003c') })
+  expect(imgElement).toBeInTheDocument();
+});
 
-      expect(container.querySelector('#logoutSection')).toBeNull();
-    });
+test('logoutSection is not rendered when the user is logged out', () => {
+  renderWithStore(configureStore({ reducer: { auth: authReducer } }));
 
-    it('is not rendered when the user is logged out', () => {
-      const { container } = render(
-        <Header user={{ email: '', password: '', isLoggedIn: false }} logOut={() => {}} />
-      );
+  const logoutSection = screen.queryByText(/logout/i);
 
-      expect(container.querySelector('#logoutSection')).toBeNull();
-    });
+  expect(logoutSection).not.toBeInTheDocument();
+});
 
-    it('is rendered with the user email when the user is logged in', () => {
-      const { container } = render(<Header user={loggedInUser} logOut={() => {}} />);
-      const logoutSection = container.querySelector('#logoutSection');
+test('logoutSection is rendered with the user email when the user is logged in', () => {
+  renderWithStore(createLoggedInStore());
 
-      expect(logoutSection).toBeTruthy();
-      expect(logoutSection.textContent).toMatch(/welcome test@example\.com \(logout\)/i);
-    });
+  const logoutSection = screen.getByText(/logout/i);
+  expect(logoutSection).toBeInTheDocument();
+  expect(screen.getByText(/test@test.com/i)).toBeInTheDocument();
+});
 
-    it('calls the logOut prop when clicking on the logout link', () => {
-      const logOut = jest.fn();
-      render(<Header user={loggedInUser} logOut={logOut} />);
+test('clicking logout link dispatches logout and hides the logoutSection', () => {
+  const store = createLoggedInStore();
+  renderWithStore(store);
 
-      fireEvent.click(screen.getByText('logout'));
+  const logoutLink = screen.getByText(/logout/i);
+  fireEvent.click(logoutLink);
 
-      expect(logOut).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('is a functional component', () => {
-    expect(typeof Header).toBe('function');
-    expect(Header.prototype?.render).toBeUndefined();
-  });
-
-  it('hides the logoutSection once logOut updates the user prop', () => {
-    function Wrapper() {
-      const [user, setUser] = useState(loggedInUser);
-      const logOut = () => setUser({ email: '', password: '', isLoggedIn: false });
-
-      return <Header user={user} logOut={logOut} />;
-    }
-    const { container } = render(<Wrapper />);
-    expect(container.querySelector('#logoutSection')).toBeTruthy();
-
-    fireEvent.click(screen.getByText('logout'));
-
-    expect(container.querySelector('#logoutSection')).toBeNull();
-  });
+  expect(store.getState().auth.isLoggedIn).toBe(false);
+  expect(store.getState().auth.user).toEqual({ email: '', password: '' });
+  expect(screen.queryByText(/logout/i)).not.toBeInTheDocument();
 });

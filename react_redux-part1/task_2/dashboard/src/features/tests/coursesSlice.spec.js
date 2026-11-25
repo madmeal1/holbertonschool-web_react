@@ -38,7 +38,7 @@ describe('coursesSlice', () => {
 
       const promise = store.dispatch(fetchCourses());
       expect(mockAxios.get).toHaveBeenCalledWith(COURSES_URL);
-      mockAxios.mockResponse({ data: coursesData });
+      mockAxios.mockResponse({ data: { courses: coursesData } });
       await promise;
 
       expect(store.getState().courses.courses).toEqual(coursesData);
@@ -47,7 +47,7 @@ describe('coursesSlice', () => {
     it('keeps the current courses when the request fails', async () => {
       const store = createStore();
       const firstFetch = store.dispatch(fetchCourses());
-      mockAxios.mockResponse({ data: coursesData });
+      mockAxios.mockResponse({ data: { courses: coursesData } });
       await firstFetch;
 
       const promise = store.dispatch(fetchCourses());
@@ -71,7 +71,7 @@ describe('coursesSlice', () => {
       const store = createStore();
       store.dispatch(login({ email: 'test@example.com', password: 'secret123' }));
       const promise = store.dispatch(fetchCourses());
-      mockAxios.mockResponse({ data: coursesData });
+      mockAxios.mockResponse({ data: { courses: coursesData } });
       await promise;
       expect(store.getState().courses.courses).toHaveLength(3);
 

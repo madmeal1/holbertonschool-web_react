@@ -1,39 +1,50 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export default function useLogin(onLogin) {
+  const [enableSubmit, setEnableSubmit] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
 
-const isFormValid = (email, password) => EMAIL_REGEX.test(email) && password.length >= 8
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
-function useLogin(onLogin = () => {}) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [enableSubmit, setEnableSubmit] = useState(false)
+  const handleChangeEmail = (e) => {
+    const newEmail = e.target.value;
+    const { password } = formData;
+    
+    setFormData(prev => ({
+      ...prev,
+      email: newEmail
+    }));
+    setEnableSubmit(validateEmail(newEmail) && password.length >= 8);
+  };
 
-  const handleChangeEmail = (event) => {
-    const { value } = event.target
-    setEmail(value)
-    setEnableSubmit(isFormValid(value, password))
-  }
+  const handleChangePassword = (e) => {
+    const newPassword = e.target.value;
+    const { email } = formData;
+    
+    setFormData(prev => ({
+      ...prev,
+      password: newPassword
+    }));
+    setEnableSubmit(validateEmail(email) && newPassword.length >= 8);
+  };
 
-  const handleChangePassword = (event) => {
-    const { value } = event.target
-    setPassword(value)
-    setEnableSubmit(isFormValid(email, value))
-  }
-
-  const handleLoginSubmit = (event) => {
-    event.preventDefault()
-    onLogin(email, password)
-  }
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    onLogin(formData.email, formData.password);
+  };
 
   return {
-    email,
-    password,
+    email: formData.email,
+    password: formData.password,
     enableSubmit,
     handleChangeEmail,
     handleChangePassword,
-    handleLoginSubmit,
-  }
+    handleLoginSubmit
+  };
 }
-
-export default useLogin

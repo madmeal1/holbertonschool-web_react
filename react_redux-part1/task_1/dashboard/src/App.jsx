@@ -1,124 +1,136 @@
-/* global process */
-import { useCallback, useEffect, useReducer } from 'react'
-import axios from 'axios'
-import './App.css'
-import Notifications from './components/Notifications/Notifications'
-import Header from './components/Header/Header'
-import Login from './pages/Login/Login'
-import CourseList from './pages/CourseList/CourseList'
-import Footer from './components/Footer/Footer'
-import BodySection from './components/BodySection/BodySection'
-import BodySectionWithMarginBottom from './components/BodySectionWithMarginBottom/BodySectionWithMarginBottom'
-import { getLatestNotification } from './utils/utils.js'
-import { APP_ACTIONS, appReducer, initialState } from './appReducer'
+import { useEffect, useReducer, useCallback } from 'react';
+import axios from 'axios';
+import { StyleSheet, css } from 'aphrodite';
+import Notifications from './components/Notifications/Notifications';
+import Footer from './components/Footer/Footer';
+import Header from './components/Header/Header';
+import Login from './pages/Login/Login';
+import CourseList from './pages/CourseList/CourseList';
+import { getLatestNotification } from './utils/utils';
+import BodySectionWithMarginBottom from './components/BodySectionWithMarginBottom/BodySectionWithMarginBottom';
+import BodySection from './components/BodySection/BodySection';
+import { appReducer, initialState, APP_ACTIONS } from './appReducer';
 
-const logError = (error) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error(error)
+const API_BASE_URL = 'http://localhost:5173';
+const ENDPOINTS = {
+  courses: `${API_BASE_URL}/courses.json`,
+  notifications: `${API_BASE_URL}/notifications.json`,
+};
+
+const styles = StyleSheet.create({
+  app: {
+    position: 'relative'
   }
-}
+});
 
-function App() {
-  const [state, dispatch] = useReducer(appReducer, initialState)
-  const { displayDrawer, user, notifications, courses } = state
+export default function App() {
+  const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Notifications are needed as soon as the app loads
   useEffect(() => {
-    let ignore = false
-
     const fetchNotifications = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5173/notifications.json')
-        if (!ignore) {
-          dispatch({
-            type: APP_ACTIONS.SET_NOTIFICATIONS,
-            payload: data.map((notification) =>
-              notification.id === 3
-                ? { ...notification, html: { __html: getLatestNotification() } }
-                : notification
-            ),
-          })
+        const response = await axios.get(ENDPOINTS.notifications);
+        const latestNotif = {
+          id: 3,
+          type: "urgent",
+          html: { __html: getLatestNotification() }
+        };
+
+        const currentNotifications = response.data.notifications;
+        const indexToReplace = currentNotifications.findIndex(
+          notification => notification.id === 3
+        );
+
+        const updatedNotifications = [...currentNotifications];
+        if (indexToReplace !== -1) {
+          updatedNotifications[indexToReplace] = latestNotif;
+        } else {
+          updatedNotifications.push(latestNotif);
         }
+
+        dispatch({ type: APP_ACTIONS.SET_NOTIFICATIONS, payload: updatedNotifications });
       } catch (error) {
-        logError(error)
+        console.error('Error fetching notifications:', error);
       }
-    }
+    };
 
-    fetchNotifications()
+    fetchNotifications();
+  }, []);
 
-    return () => {
-      ignore = true
-    }
-  }, [])
-
-  // Courses depend on the authenticated user: only fetch them once logged in
   useEffect(() => {
-    if (!user.isLoggedIn) {
-      return undefined
-    }
-
-    let ignore = false
-
     const fetchCourses = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5173/courses.json')
-        if (!ignore) {
-          dispatch({ type: APP_ACTIONS.SET_COURSES, payload: data })
-        }
+        const response = await axios.get(ENDPOINTS.courses);
+        dispatch({ type: APP_ACTIONS.SET_COURSES, payload: response.data.courses });
       } catch (error) {
-        logError(error)
+        console.error('Error fetching courses:', error);
       }
+    };
+
+    if (!state.user.isLoggedIn) {
+      dispatch({ type: APP_ACTIONS.SET_COURSES, payload: [] });
+      return;
     }
 
-    fetchCourses()
+    fetchCourses();
+  }, [state.user.isLoggedIn]);
 
-    return () => {
-      ignore = true
-    }
-  }, [user])
+  const handleDisplayDrawer = useCallback(() => {
+    dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
+  }, []);
 
-  const logIn = useCallback((email, password) => {
-    dispatch({ type: APP_ACTIONS.LOGIN, payload: { email, password } })
-  }, [])
+  const handleHideDrawer = useCallback(() => {
+    dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
+  }, []);
 
-  const logOut = useCallback(() => {
-    dispatch({ type: APP_ACTIONS.LOGOUT })
-  }, [])
+  const logIn = (email, password) => {
+    dispatch({
+      type: APP_ACTIONS.LOGIN,
+      payload: { email, password }
+    });
+  };
+
+  const logOut = () => {
+    dispatch({ type: APP_ACTIONS.LOGOUT });
+  };
 
   const markNotificationAsRead = useCallback((id) => {
-    console.log(`Notification ${id} has been marked as read`)
-    dispatch({ type: APP_ACTIONS.MARK_NOTIFICATION_READ, payload: id })
-  }, [])
-
-  const toggleDrawer = useCallback(() => {
-    dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER })
-  }, [])
+    dispatch({
+      type: APP_ACTIONS.MARK_NOTIFICATION_READ,
+      payload: id
+    });
+    console.log(`Notification ${id} has been marked as read`);
+  }, []);
 
   return (
-    <>
+    <div className={css(styles.app)}>
       <Notifications
-        notifications={notifications}
+        notifications={state.notifications}
+        handleHideDrawer={handleHideDrawer}
+        handleDisplayDrawer={handleDisplayDrawer}
+        displayDrawer={state.displayDrawer}
         markNotificationAsRead={markNotificationAsRead}
-        displayDrawer={displayDrawer}
-        handleDisplayDrawer={toggleDrawer}
-        handleHideDrawer={toggleDrawer}
       />
-      <Header user={user} logOut={logOut} />
-      {user.isLoggedIn ? (
-        <BodySectionWithMarginBottom title="Course list">
-          <CourseList courses={courses} />
-        </BodySectionWithMarginBottom>
-      ) : (
-        <BodySectionWithMarginBottom title="Log in to continue">
-          <Login logIn={logIn} />
-        </BodySectionWithMarginBottom>
-      )}
-      <BodySection title="News from the School">
-        <p>Holberton School News goes here</p>
-      </BodySection>
-      <Footer user={user} />
-    </>
-  )
+      <>
+        <Header user={state.user} logOut={logOut} />
+        {!state.user.isLoggedIn ? (
+          <BodySectionWithMarginBottom title='Log in to continue'>
+            <Login
+              logIn={logIn}
+              email={state.user.email}
+              password={state.user.password}
+            />
+          </BodySectionWithMarginBottom>
+        ) : (
+          <BodySectionWithMarginBottom title='Course list'>
+            <CourseList courses={state.courses} />
+          </BodySectionWithMarginBottom>
+        )}
+        <BodySection title="News from the School">
+          <p>Holberton School news goes here</p>
+        </BodySection>
+      </>
+      <Footer user={state.user} />
+    </div>
+  );
 }
-
-export default App

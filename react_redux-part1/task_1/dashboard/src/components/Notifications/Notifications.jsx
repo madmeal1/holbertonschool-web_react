@@ -1,82 +1,139 @@
-import { memo } from 'react'
-import PropTypes from 'prop-types'
-import closeButton from '../../assets/close-icon.png'
-import NotificationItem from '../NotificationItem/NotificationItem'
+import { memo } from "react";
+import { StyleSheet, css } from "aphrodite";
+import closeIcon from "../../assets/close-icon.png";
+import NotificationItem from "../NotificationItem/NotificationItem";
 
-const noop = () => {}
+const opacityKeyframes = {
+  from: {
+    opacity: 0.5,
+  },
+  to: {
+    opacity: 1,
+  },
+};
 
-function Notifications({
-  notifications = [],
-  displayDrawer = false,
-  handleDisplayDrawer = noop,
-  handleHideDrawer = noop,
-  markNotificationAsRead = noop,
+const bounceKeyframes = {
+  "0%": {
+    transform: "translateY(0px)",
+  },
+  "50%": {
+    transform: "translateY(-5px)",
+  },
+  "100%": {
+    transform: "translateY(5px)",
+  },
+};
+
+const styles = StyleSheet.create({
+  notificationItems: {
+    position: "relative",
+    border: "3px dotted #e1003c",
+    padding: "5px",
+    fontFamily: "Roboto, sans-serif",
+    width: "25%",
+    float: "right",
+    marginTop: "20px",
+    "@media (max-width: 900px)": {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      border: "none",
+      padding: 0,
+      margin: 0,
+      fontSize: "20px",
+      backgroundColor: "white",
+      zIndex: 1000,
+    },
+  },
+  ul: {
+    "@media (max-width: 900px)": {
+      padding: 0,
+    },
+  },
+  p: {
+    margin: 0,
+    "@media (max-width: 900px)": {
+      fontSize: "20px",
+    },
+  },
+  button: {
+    position: "absolute",
+    cursor: "pointer",
+    right: "calc(0% - 480px)",
+    top: "calc(0% - 480px)",
+    background: "transparent",
+    transform: "scale(0.012)",
+    WebkitTransform: "scale(0.012)",
+    MozTransform: "scale(0.012)",
+    msTransform: "scale(0.012)",
+    OTransform: "scale(0.012)",
+  },
+  menuItem: {
+    float: "right",
+    position: "absolute",
+    right: "10px",
+    top: "-5px",
+    backgroundColor: "#fff8f8",
+    cursor: "pointer",
+    ":hover": {
+      animationName: [opacityKeyframes, bounceKeyframes],
+      animationDuration: "1s, 0.5s",
+      animationIterationCount: "3, 3",
+    },
+  },
+});
+
+const Notifications = memo(function Notifications({
+  displayDrawer,
+  handleDisplayDrawer,
+  handleHideDrawer,
+  notifications,
+  markNotificationAsRead,
 }) {
-  const handleCloseClick = () => {
-    console.log('Close button has been clicked')
-    handleHideDrawer()
-  }
-
   return (
     <>
-      <div className="notification-title text-right cursor-pointer" onClick={handleDisplayDrawer}>
+      <div
+        className={css(styles.menuItem)}
+        onClick={() => handleDisplayDrawer()}
+      >
         Your notifications
       </div>
-
-      {displayDrawer && (
-        <div className="notification-items relative w-1/4 ml-auto p-1.5 border-2 border-dashed border-[var(--main-color)]">
-          {notifications.length === 0 ? (
-            <p>No new notification for now</p>
-          ) : (
+      {displayDrawer ? (
+        <div className={css(styles.notificationItems)}>
+          {notifications.length > 0 ? (
             <>
+              <p className={css(styles.p)}>Here is the list of notifications</p>
               <button
+                onClick={() => handleHideDrawer()}
                 aria-label="Close"
-                onClick={handleCloseClick}
-                className="float-right p-0 border-none bg-transparent cursor-pointer"
+                className={css(styles.button)}
               >
-                <img src={closeButton} alt="close icon" width="12" height="12" />
+                <img src={closeIcon} alt="close icon" />
               </button>
-
-              <p>Here is the list of notifications</p>
-
-              <ul>
-                {notifications.map(({ id, type, html, value }) => (
+              <ul className={css(styles.ul)}>
+                {notifications.map((notification) => (
                   <NotificationItem
-                    key={id}
-                    id={id}
-                    type={type}
-                    html={html}
-                    value={value}
+                    id={notification.id}
+                    key={notification.id}
+                    type={notification.type}
+                    value={notification.value}
+                    html={notification.html}
                     markAsRead={markNotificationAsRead}
                   />
                 ))}
               </ul>
             </>
+          ) : (
+            <p className={css(styles.p)}>No new notifications for now</p>
           )}
         </div>
+      ) : (
+        []
       )}
     </>
-  )
-}
+  );
+});
 
-Notifications.propTypes = {
-  notifications: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      type: PropTypes.string,
-      html: PropTypes.shape({ __html: PropTypes.string }),
-      value: PropTypes.string,
-    })
-  ),
-  displayDrawer: PropTypes.bool,
-  handleDisplayDrawer: PropTypes.func,
-  handleHideDrawer: PropTypes.func,
-  markNotificationAsRead: PropTypes.func,
-}
-
-// Returning true skips the render: only re-render when the drawer toggles or the list length changes
-export const areNotificationsPropsEqual = (prevProps, nextProps) =>
-  prevProps.displayDrawer === nextProps.displayDrawer &&
-  (prevProps.notifications || []).length === (nextProps.notifications || []).length
-
-export default memo(Notifications, areNotificationsPropsEqual)
+export default Notifications;

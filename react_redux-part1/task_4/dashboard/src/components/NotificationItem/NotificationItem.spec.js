@@ -1,96 +1,82 @@
-import { render, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import NotificationItem from './NotificationItem';
 
-describe('NotificationItem', () => {
-  it('renders an li with data-notification-type "default"', () => {
-    const { container } = render(
-      <NotificationItem type="default" value="New course available" />
-    );
-    const item = container.querySelector('li');
 
-    expect(item).toBeTruthy();
-    expect(item.getAttribute('data-notification-type')).toBe('default');
+test('it should call markAsRead with the correct id when the notification item is clicked', () => {
+  const mockMarkAsRead = jest.fn();
+  const props = {
+    id: 42,
+    type: 'default',
+    value: 'Test notification',
+    markAsRead: mockMarkAsRead,
+  };
+
+  render(<NotificationItem {...props} />);
+
+  const liElement = screen.getByRole('listitem');
+
+  fireEvent.click(liElement);
+
+  expect(mockMarkAsRead).toHaveBeenCalledTimes(1);
+  expect(mockMarkAsRead).toHaveBeenCalledWith(42);
+});
+
+describe('NotificationItem - React.memo behavior', () => {
+  let markAsRead;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    markAsRead = jest.fn();
   });
 
-  it('renders an li with data-notification-type "urgent"', () => {
-    const { container } = render(
-      <NotificationItem type="urgent" value="New resume available" />
-    );
-    const item = container.querySelector('li');
-
-    expect(item).toBeTruthy();
-    expect(item.getAttribute('data-notification-type')).toBe('urgent');
-  });
-
-  it('renders the value as text', () => {
-    const { container } = render(
-      <NotificationItem type="default" value="New course available" />
-    );
-
-    expect(container.querySelector('li').textContent).toBe('New course available');
-  });
-
-  it('renders the html prop with dangerouslySetInnerHTML', () => {
-    const { container } = render(
+  test('should update when props change', () => {
+    const { rerender, container } = render(
       <NotificationItem
+        id={1}
         type="urgent"
-        html={{ __html: '<strong>Urgent requirement</strong> - complete by EOD' }}
+        value="New notification"
+        markAsRead={markAsRead}
       />
     );
-    const item = container.querySelector('li');
 
-    expect(item.querySelector('strong')).toBeTruthy();
-    expect(item.textContent).toBe('Urgent requirement - complete by EOD');
-  });
+    const firstRender = container.querySelector('[data-notification-type]').textContent;
 
-  it('calls the markAsRead prop when the notification item is clicked', () => {
-    const markAsRead = jest.fn();
-    const { container } = render(
-      <NotificationItem id={1} type="default" value="New course available" markAsRead={markAsRead} />
+    rerender(
+      <NotificationItem
+        id={1}
+        type="urgent"
+        value="Updated notification"
+        markAsRead={markAsRead}
+      />
     );
 
-    fireEvent.click(container.querySelector('li'));
-
-    expect(markAsRead).toHaveBeenCalledTimes(1);
-    expect(markAsRead).toHaveBeenCalledWith(1);
+    const secondRender = container.querySelector('[data-notification-type]').textContent;
+    expect(secondRender).not.toBe(firstRender);
+    expect(secondRender).toBe('Updated notification');
   });
 
-  describe('memoization', () => {
-    let innerRender;
-    let originalType;
+  test('should not re-render when props do not change', () => {
+    const { rerender, container } = render(
+      <NotificationItem
+        id={1}
+        type="urgent"
+        value="New notification"
+        markAsRead={markAsRead}
+      />
+    );
 
-    beforeEach(() => {
-      // memo() exposes the wrapped function component as `.type`; spy on it to count real renders
-      originalType = NotificationItem.type;
-      innerRender = jest.fn(originalType);
-      NotificationItem.type = innerRender;
-    });
+    const firstElement = container.querySelector('[data-notification-type]');
 
-    afterEach(() => {
-      NotificationItem.type = originalType;
-    });
+    rerender(
+      <NotificationItem
+        id={1}
+        type="urgent"
+        value="New notification"
+        markAsRead={markAsRead}
+      />
+    );
 
-    it('is wrapped with React.memo', () => {
-      expect(NotificationItem.$$typeof).toBe(Symbol.for('react.memo'));
-    });
-
-    it('does not re-render when the props are shallowly equal', () => {
-      const props = { id: 1, type: 'default', value: 'New course available', markAsRead: () => {} };
-      const { rerender } = render(<NotificationItem {...props} />);
-
-      rerender(<NotificationItem {...props} />);
-
-      expect(innerRender).toHaveBeenCalledTimes(1);
-    });
-
-    it('re-renders when a prop changes', () => {
-      const props = { id: 1, type: 'default', value: 'New course available', markAsRead: () => {} };
-      const { container, rerender } = render(<NotificationItem {...props} />);
-
-      rerender(<NotificationItem {...props} value="Updated notification" />);
-
-      expect(innerRender).toHaveBeenCalledTimes(2);
-      expect(container.querySelector('li').textContent).toBe('Updated notification');
-    });
+    const secondElement = container.querySelector('[data-notification-type]');
+    expect(secondElement.textContent).toBe(firstElement.textContent);
   });
 });

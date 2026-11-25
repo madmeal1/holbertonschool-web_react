@@ -1,37 +1,73 @@
-import PropTypes from 'prop-types'
-import CourseListRow from './CourseListRow/CourseListRow'
-import WithLogging from '../../components/HOC/WithLogging'
+import { StyleSheet, css } from 'aphrodite';
+import CourseListRow from './CourseListRow/CourseListRow';
+import WithLogging from '../../components/HOC/WithLogging';
+
+const styles = StyleSheet.create({
+  courses: {
+    margin: '130px auto',
+    width: '90%',
+    height: '33vh'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    border: '2px solid rgb(161, 161, 161)',
+    ':nth-child(1n) th': {
+      border: '2px solid rgb(161, 161, 161)'
+    },
+    ':nth-child(1n) tr': {
+      border: '2px solid rgb(161, 161, 161)'
+    },
+    ':nth-child(1n) td': {
+      border: '2px solid rgb(161, 161, 161)'
+    }
+  }
+});
 
 function CourseList({ courses = [] }) {
   return (
-    <div className="relative overflow-x-auto w-4/5 mx-auto my-8">
-      <table id="CourseList" className="w-full border-collapse">
-        <thead>
-          <CourseListRow textFirstCell="Available courses" isHeader={true} />
-          <CourseListRow textFirstCell="Course name" textSecondCell="Credit" isHeader={true} />
-        </thead>
-        <tbody>
-          {courses.length === 0 ? (
-            <CourseListRow textFirstCell="No course available yet" />
-          ) : (
-            courses.map(({ id, name, credit }) => (
-              <CourseListRow key={id} textFirstCell={name} textSecondCell={credit} />
-            ))
-          )}
-        </tbody>
-      </table>
+    <div className={css(styles.courses)}>
+      {
+        courses.length > 0 ? 
+        (
+          <table id='CourseList' className={css(styles.table)}>
+            <thead>
+              <CourseListRow 
+                textFirstCell="Available courses" 
+                isHeader={true} 
+              />
+              <CourseListRow 
+                textFirstCell="Course name" 
+                textSecondCell="Credit" 
+                isHeader={true} 
+              />
+            </thead>
+            <tbody>
+              {
+                courses.map(course => (
+                  <CourseListRow 
+                    key={course.id} 
+                    textFirstCell={course.name} 
+                    textSecondCell={course.credit} 
+                  />
+                ))
+              }
+            </tbody>
+          </table>
+        ) : (
+          <table id='CourseList' className={css(styles.table)}>
+            <thead>
+              <CourseListRow 
+                isHeader={true} 
+                textFirstCell="No course available yet" 
+              />
+            </thead>
+          </table>
+        )
+      }
     </div>
-  )
+  );
 }
 
-CourseList.propTypes = {
-  courses: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      credit: PropTypes.number.isRequired,
-    })
-  ),
-}
-
-export default WithLogging(CourseList)
+const CourseListWithLogging = WithLogging(CourseList);
+export default CourseListWithLogging

@@ -45,7 +45,7 @@ describe('notificationsSlice', () => {
 
       const promise = store.dispatch(fetchNotifications());
       expect(mockAxios.get).toHaveBeenCalledWith(NOTIFICATIONS_URL);
-      mockAxios.mockResponse({ data: notificationsData });
+      mockAxios.mockResponse({ data: { notifications: notificationsData } });
       await promise;
 
       const { notifications } = store.getState().notifications;

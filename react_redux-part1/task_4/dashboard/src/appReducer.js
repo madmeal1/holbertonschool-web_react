@@ -4,8 +4,8 @@ export const APP_ACTIONS = {
   TOGGLE_DRAWER: 'TOGGLE_DRAWER',
   MARK_NOTIFICATION_READ: 'MARK_NOTIFICATION_READ',
   SET_NOTIFICATIONS: 'SET_NOTIFICATIONS',
-  SET_COURSES: 'SET_COURSES',
-}
+  SET_COURSES: 'SET_COURSES'
+};
 
 export const initialState = {
   displayDrawer: true,
@@ -16,7 +16,7 @@ export const initialState = {
   },
   notifications: [],
   courses: [],
-}
+};
 
 export function appReducer(state = initialState, action) {
   switch (action.type) {
@@ -26,25 +26,48 @@ export function appReducer(state = initialState, action) {
         user: {
           email: action.payload.email,
           password: action.payload.password,
-          isLoggedIn: true,
-        },
-      }
+          isLoggedIn: true
+        }
+      };
+      
     case APP_ACTIONS.LOGOUT:
-      return { ...state, user: { ...initialState.user } }
+      return {
+        ...state,
+        user: {
+          email: '',
+          password: '',
+          isLoggedIn: false
+        },
+        courses: []
+      };
+
+    case APP_ACTIONS.SET_NOTIFICATIONS:
+      return {
+        ...state,
+        notifications: action.payload
+      };
+
+    case APP_ACTIONS.SET_COURSES:
+      return {
+        ...state,
+        courses: action.payload
+      };
+
     case APP_ACTIONS.TOGGLE_DRAWER:
-      return { ...state, displayDrawer: !state.displayDrawer }
+      return {
+        ...state,
+        displayDrawer: !state.displayDrawer
+      };
+
     case APP_ACTIONS.MARK_NOTIFICATION_READ:
       return {
         ...state,
-        notifications: state.notifications.filter((notification) => notification.id !== action.payload),
-      }
-    case APP_ACTIONS.SET_NOTIFICATIONS:
-      return { ...state, notifications: action.payload }
-    case APP_ACTIONS.SET_COURSES:
-      return { ...state, courses: action.payload }
+        notifications: state.notifications.filter(
+          notification => notification.id !== action.payload
+        )
+      };
+
     default:
-      return state
+      return state;
   }
 }
-
-export default appReducer
