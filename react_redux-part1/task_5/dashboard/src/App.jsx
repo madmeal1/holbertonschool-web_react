@@ -12,6 +12,7 @@ import BodySectionWithMarginBottom from './components/BodySectionWithMarginBotto
 import BodySection from './components/BodySection/BodySection';
 import { appReducer, initialState, APP_ACTIONS } from './appReducer';
 import { login } from './features/auth/authSlice';
+import { fetchCourses } from './features/courses/coursesSlice';
 
 const API_BASE_URL = 'http://localhost:5173';
 const ENDPOINTS = {
@@ -63,22 +64,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await axios.get(ENDPOINTS.courses);
-        dispatch({ type: APP_ACTIONS.SET_COURSES, payload: response.data.courses });
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    };
-
-    if (!isLoggedIn) {
-      dispatch({ type: APP_ACTIONS.SET_COURSES, payload: [] });
-      return;
+    if (isLoggedIn) {
+      reduxDispatch(fetchCourses());
     }
-
-    fetchCourses();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, reduxDispatch]);
 
   const handleDisplayDrawer = useCallback(() => {
     dispatch({ type: APP_ACTIONS.TOGGLE_DRAWER });
@@ -121,7 +110,7 @@ export default function App() {
           </BodySectionWithMarginBottom>
         ) : (
           <BodySectionWithMarginBottom title='Course list'>
-            <CourseList courses={state.courses} />
+            <CourseList />
           </BodySectionWithMarginBottom>
         )}
         <BodySection title="News from the School">
